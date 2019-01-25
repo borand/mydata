@@ -1,0 +1,31 @@
+	<!doctype html>
+	<html>
+		<head>
+			<title>{% block page_title %}{% endblock %}</title>		
+			<meta name="viewport" content="width=device-width, initial-scale=1">
+			<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.css" />
+            <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+            <script src="http://code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.js"></script>
+            {% block extra_head %}{% endblock %}
+		</head>
+		
+		<body>
+			<div data-role="page" id="main">
+				<div data-role="header" data-theme="b">
+					 <h2>{% block page_header_title %}Sensoredwebb{% endblock %}</h2>
+					 <a href="/admin" data-icon="gear" class="ui-btn-right" data-ajax="false">Admin</a>
+					<div data-role="navbar">
+			        	<ul>
+			        	<li><a href="/">Home</a></li>
+			            <li><a href="/sensordata">Sensordata</a></li>
+			            <li><a href="/insteon">Insteon</a></li>   
+			            <li><a href="/debug">Debug</a></li>   
+			            <li><a href="/about">About</a></li>            
+			        	</ul>
+			    	</div><!-- /navbar -->
+				</div>
+			<div data-role="content">{% block page_content %}{% endblock %}</div>
+			</div>
+		</body>
+		
+	</html>
