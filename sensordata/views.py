@@ -30,7 +30,7 @@ logger = logging.getLogger('app')
 #
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return HttpResponse("Sensordata index.")
 
 
 def ping(request):
@@ -77,7 +77,7 @@ def api_submit_datavalue(request, datestamp, sn, val):
 
 def api_get_datavalue(request, **kwargs):
     # msg = "[SUBMITTED] datestamp: %s, sn: %s, val: %s" % (datestamp, sn, val)
-    # logger.info(kwargs)
+    logger.info(kwargs)
 
     # results = data_value_submission(datestamp, sn, val, request.META.get('REMOTE_ADDR'))
     serial_number = kwargs['serial_number']
@@ -89,16 +89,20 @@ def api_get_datavalue(request, **kwargs):
     if 'today' in kwargs:
         # logger.debug("Filtering: todays data")
         kwargs['today'] = datetime.date.today().timetuple();
-        queryset = queryset.filter(data_timestamp__measurement_timestamp_sec__gte=time.mktime(datetime.date.today().timetuple()))
-        values_list = queryset.values_list('data_timestamp__measurement_timestamp_sec', 'value')
+        queryset = queryset.filter(data_timestamp__measurement_timestamp__gte=datetime.date.today())
+        
 
-    if 'from' in kwargs and 'to' in kwargs:
-        logger.debug("Filtering: from %s to %s".format(kwargs.has_key('from'), kwargs.has_key('to')))
+    elif 'from' in kwargs and 'to' in kwargs:
+        logger.debug(f"Filtering: from {kwargs['from']} to {kwargs['to']}")
         start_date = datetime.datetime.strptime(kwargs['from'].split('.')[0], "%Y-%m-%d")
         end_date = datetime.datetime.strptime(kwargs['to'].split('.')[0], "%Y-%m-%d")
-        queryset = queryset.filter(data_timestamp__measurement_timestamp__range=(start_date, end_date))
-        values_list = queryset.values_list('data_timestamp__measurement_timestamp_sec', 'value')
+        if end_date > start_date:
+            queryset = queryset.filter(data_timestamp__measurement_timestamp__range=(start_date, end_date))
+    else:
+        kwargs['all'] = True
+    
 
+    values_list = queryset.values_list('data_timestamp__measurement_timestamp_sec', 'value')
     for data_pt in values_list:
         data.append([data_pt[0], data_pt[1]])
 

@@ -57,11 +57,13 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class DeviceInstanceSerializer(serializers.ModelSerializer):
+    device = serializers.PrimaryKeyRelatedField(queryset=Device.objects.all())
     class Meta:
         model = DeviceInstance
         fields = '__all__'
 
 class DataValueSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = DataValue
         fields = ('data_timestamp', 'device_instance', 'value')

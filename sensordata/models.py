@@ -19,7 +19,7 @@ from django.db import models
 
 # logger = getLogger("app")
 
-version = '2014.08.29'
+version = '2019.01.30'
 
 
 class Units(models.Model):
@@ -221,17 +221,6 @@ class DeviceInstance(models.Model):
 
 
 class DataValueManager(models.Manager):
-#    This method was replaced by last_value in DeviceInstance   
-#    def last(self, **kwargs):
-#        device_instance_queryset = DeviceInstance.objects.all().order_by('device')
-#        device_value_time = []
-#        for device_instance in device_instance_queryset:
-#            data_values = DataValue.objects.filter(device_instance=device_instance).order_by('data_timestamp')
-#            if len(data_values) > 1:
-#                val = data_values[0]
-#                device_value_time.append([device_instance, val])
-#                
-#        return device_value_time
     
     def today(self, **kwargs):
         items = self.model.objects.filter(data_timestamp__measurement_timestamp__gte=datetime.date.today())
