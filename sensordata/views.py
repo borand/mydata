@@ -5,6 +5,7 @@ import datetime
 import logging
 import json
 import time
+from django.utils import timezone
 
 from django.utils import timezone
 from django.contrib.auth.models import User, Group
@@ -18,7 +19,7 @@ from rest_framework import viewsets
 from rest_framework import generics
 from rest_framework import permissions
 from . import models
-from .serializers import UserSerializer, GroupSerializer, UnitsSerializer
+from .serializers import UserSerializer, GroupSerializer, UnitsSerializer, DataValuePairSerializer
 
 
 logger = logging.getLogger('app')
@@ -65,7 +66,6 @@ class GatewayMonView(TemplateView):
 # Basic object display classes
 #
 
-
 def api_submit_datavalue(request, datestamp, sn, val):
     msg = "[SUBMITTED] datestamp: %s, sn: %s, val: %s" % (datestamp, sn, val)
     logger.info(msg)
@@ -75,65 +75,32 @@ def api_submit_datavalue(request, datestamp, sn, val):
         results = ' Exception: {0}'.format(E)
     return HttpResponse(json.dumps({"msg": msg, "response": results}))
 
+def api_get_datavalue(request, **kwargs):
+    # msg = "[SUBMITTED] datestamp: %s, sn: %s, val: %s" % (datestamp, sn, val)
+    # logger.info(kwargs)
 
-# class UserViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows users to be viewed or edited.
-#     """
-#     queryset = User.objects.all().order_by('-date_joined')
-#     serializer_class = UserSerializer
+    # results = data_value_submission(datestamp, sn, val, request.META.get('REMOTE_ADDR'))
+    serial_number = kwargs['serial_number']
+    # logger.info(serial_number)
+    queryset = models.DataValue.objects.filter(device_instance__serial_number=serial_number).order_by('data_timestamp__measurement_timestamp_sec')
+    data = []
+    values_list = []
+    
+    if 'today' in kwargs:
+        # logger.debug("Filtering: todays data")
+        kwargs['today'] = datetime.date.today().timetuple();
+        queryset = queryset.filter(data_timestamp__measurement_timestamp_sec__gte=time.mktime(datetime.date.today().timetuple()))
+        values_list = queryset.values_list('data_timestamp__measurement_timestamp_sec', 'value')
 
+    if 'from' in kwargs and 'to' in kwargs:
+        logger.debug("Filtering: from %s to %s".format(kwargs.has_key('from'), kwargs.has_key('to')))
+        start_date = datetime.datetime.strptime(kwargs['from'].split('.')[0], "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(kwargs['to'].split('.')[0], "%Y-%m-%d")
+        queryset = queryset.filter(data_timestamp__measurement_timestamp__range=(start_date, end_date))
+        values_list = queryset.values_list('data_timestamp__measurement_timestamp_sec', 'value')
 
-# class GroupViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows groups to be viewed or edited.
-#     """
-#     queryset = Group.objects.all()
-#     serializer_class = GroupSerializer
+    for data_pt in values_list:
+        data.append([data_pt[0], data_pt[1]])
 
-# class UnitsViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows users to be viewed or edited.
-#     """
-#     queryset = models.Units.objects.all()
-#     serializer_class = UnitsSerializer
-
-
-
-# class DataValueDetail(generics.RetrieveUpdateDestroyAPIView):
-#     # permission_classes = (permissions.IsAuthenticated, IsOwnerOrReadOnly)
-#     queryset = models.DataValue.objects.all()
-#     serializer_class = DataValueSerializer
-#     filter_fields = ('device_instance__serial_number')
-
-
-# class DataValueForDevDetail(generics.ListAPIView):
-#     # permission_classes = (permissions.IsAuthenticated, IsOwnerOrReadOnly)
-#     serializer_class = DataValuePairSerializer
-
-#     def get_queryset(self, **kwargs):
-
-#         logger.debug('get_queryset(kwargs= %s)' % str(self.kwargs))
-#         to = time.time()
-#         serial_number = self.kwargs['serial_number']
-#         queryset = models.DataValue.objects.filter(device_instance__serial_number=serial_number).order_by(
-#             'data_timestamp__measurement_timestamp')
-#         logger.debug("Query time             = %.3f" % (time.time() - to))
-
-#         if 'today' in self.kwargs:
-#             logger.debug("Filtering: todays data")
-#             queryset = queryset.filter(data_timestamp__measurement_timestamp__gte=datetime.date.today())
-
-#             # From web
-#             # today_min = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
-#             # today_max = datetime.datetime.combine(datetime.date.today(), datetime.time.max)
-#             # queryset = queryset.filter(data_timestamp__measurement_timestamp__range=(today_min, today_max))
-
-#         if 'from' in self.kwargs and 'to' in self.kwargs:
-#             logger.debug("Filtering: from %s to %s" % (self.kwargs.has_key('from'), self.kwargs.has_key('to')))
-#             start_date = datetime.datetime.strptime(self.kwargs['from'].split('.')[0], "%Y-%m-%d")
-#             end_date = datetime.datetime.strptime(self.kwargs['to'].split('.')[0], "%Y-%m-%d")
-#             queryset = queryset.filter(data_timestamp__measurement_timestamp__range=(start_date, end_date))
-
-#         logger.debug("Returning dataset")
-#         return queryset
+    kwargs['data'] = data
+    return HttpResponse(json.dumps(kwargs))
