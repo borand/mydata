@@ -4,12 +4,14 @@ This module contains 2 key function used in data submission:
 import datetime
 import logging
 from django.utils import timezone
+import re
 
 logger = logging.getLogger('app')
 
 from . import models
 import json
 
+re_date_string = re.compile("(\d{9,11})")
 
 def get_existing_or_new(date_string, save=False):
     """
@@ -24,7 +26,11 @@ def get_existing_or_new(date_string, save=False):
             datetime_obj = datetime.datetime.now()
             # datetime_obj = timezone.now()
         else:
-            datetime_obj = datetime.datetime.strptime(date_string.split('.')[0], "%Y-%m-%d-%H:%M:%S")
+            timestamp = re_date_string.findall(date_string)
+            if len(timestamp) == 1:
+                datetime_obj = datetime.datetime.fromtimestamp(int(timestamp[0])) 
+            else:
+                datetime_obj = datetime.datetime.strptime(date_string.split('.')[0], "%Y-%m-%d-%H:%M:%S")
 
         msg = "\tsubmited time: {0}".format(str(datetime_obj))
         logger.debug(msg)
@@ -45,7 +51,7 @@ def get_existing_or_new(date_string, save=False):
         # TODO - This exception must be handeled better
         logger.error("\tException occured, creating default time stamp, this might not be what you want...")
         time_stamp = models.TimeStamp()
-        time_stamp.now()
+        time_stamp.measurement_timestamp = datetime.datetime.now()
         if save:
             time_stamp.save()
 

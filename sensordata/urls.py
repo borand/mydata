@@ -11,6 +11,7 @@ urlpatterns = [
 
     ## SUBMIT DATA
     re_path(r'api/sub/(?P<datestamp>now)/sn/(?P<sn>.*)/val/(?P<val>.*)', views.api_submit_datavalue),    
+    re_path(r'api/sub/(?P<datestamp>\d{10,11})/sn/(?P<sn>.*)/val/(?P<val>.*)', views.api_submit_datavalue),
     re_path(r'api/sub/(?P<datestamp>\d{4}\-\d{1,2}\-\d{1,2}-\d{1,2}:\d{1,2}:\d{1,2}\.*\d{0,6})/sn/(?P<sn>.*)/val/(?P<val>.*)$', \
                             views.api_submit_datavalue),
     ## GET DATA
