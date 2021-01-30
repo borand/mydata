@@ -34,7 +34,7 @@ def get_existing_or_new(date_string, save=False):
 
         msg = "\tsubmited time: {0}".format(str(datetime_obj))
         logger.debug(msg)
-
+        datetime_obj = datetime_obj.replace(microsecond=0)
         time_stamp = models.TimeStamp.objects.filter(measurement_timestamp__exact=datetime_obj)
 
         if len(time_stamp) == 0:
@@ -52,6 +52,7 @@ def get_existing_or_new(date_string, save=False):
         logger.error("\tException occured, creating default time stamp, this might not be what you want...")
         time_stamp = models.TimeStamp()
         time_stamp.measurement_timestamp = datetime.datetime.now()
+        time_stamp = time_stamp.replace(microsecond=0)
         if save:
             time_stamp.save()
 
